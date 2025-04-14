@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+    <head>
+        <title>Waste Trends</title>
+        <script th:src="@{/webjars/chart.js/4.4.2/dist/chart.umd.js}"></script>
+    </head>
+    <body>
+        <div layout:fragment="content">
+            <div class="container mt-4">
+                <div class="d-flex justify-content-between mb-4">
+                    <h1 class="h3 mb-0 text-primary">
+                        <i class="bi bi-trash"></i> Waste Trend Analysis
+                    </h1>
+                </div>
+
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div th:if="${labels.empty}" class="text-center text-muted py-4">
+                            No waste data available
+                        </div>
+
+                        <div th:unless="${labels.empty}">
+                            <div class="chart-container" style="position: relative; height:400px;">
+                                <canvas id="wasteChart"></canvas>
+                            </div>
+
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    const ctx = document.getElementById('wasteChart');
+                                    const container = ctx.parentElement;
+
+                                    // Use Thymeleaf inline JavaScript syntax
+                                    const labels = /*[[${labels}]]*/ [];
+                                    const dataPoints = /*[[${data}]]*/ [];
+
+                                    console.log('Chart Data:', {
+                                        labels: labels,
+                                        data: dataPoints,
+                                        type: typeof labels[0],
+                                        dataType: typeof dataPoints[0]
+                                    });
+
+                                    if (labels.length > 0 && dataPoints.length > 0) {
+                                        new Chart(ctx, {
+                                            type: 'line',
+                                            data: {
+                                                labels: labels,
+                                                datasets: [{
+                                                        label: 'Expired Products Count',
+                                                        data: dataPoints,
+                                                        borderColor: '#dc3545',
+                                                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                                                        tension: 0.1,
+                                                        borderWidth: 2,
+                                                        pointRadius: 5,
+                                                        pointHoverRadius: 7
+                                                    }]
+                                            },
+                                            options: {
+                                                responsive: true,
+                                                maintainAspectRatio: false,
+                                                plugins: {
+                                                    legend: {
+                                                        display: true,
+                                                        position: 'top'
+                                                    },
+                                                    tooltip: {
+                                                        enabled: true,
+                                                        mode: 'index'
+                                                    }
+                                                },
+                                                scales: {
+                                                    y: {
+                                                        beginAtZero: true,
+                                                        title: {
+                                                            display: true,
+                                                            text: 'Number of Expired Products',
+                                                            font: {weight: 'bold'}
+                                                        },
+                                                        ticks: {
+                                                            stepSize: 1,
+                                                            precision: 0
+                                                        }
+                                                    },
+                                                    x: {
+                                                        title: {
+                                                            display: true,
+                                                            text: 'Expiry Date',
+                                                            font: {weight: 'bold'}
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    } else {
+                                        ctx.style.display = 'none';
+                                        container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-bar-chart-line fs-1"></i>
+                    <p class="mt-2">No waste data found for the selected period</p>
+                </div>
+            `;
+                                    }
+                                });
+                            </script>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

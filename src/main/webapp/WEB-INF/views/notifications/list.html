@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+    <head>
+        <title>Notifications</title>
+    </head>
+    <body>
+        <div layout:fragment="content">
+            <div class="container mt-4">
+                <div class="d-flex justify-content-between mb-4">
+                    <h1 class="h3 mb-0 text-primary">
+                        <i class="bi bi-bell"></i> Expiry Notifications
+                    </h1>
+                </div>
+
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div class="list-group">
+                            <div th:each="notification : ${notifications}" 
+                                 class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1" th:text="${notification.message}"></h6>
+                                    <small th:text="${#temporals.format(notification.createdDate, 'MMM dd')}"></small>
+                                </div>
+                                <div class="mt-2">
+                                    <form th:action="@{/notifications/acknowledge/{id}(id=${notification.id})}" 
+                                          method="post">
+                                        <button type="submit" class="btn btn-sm btn-outline-success">
+                                            Mark as Read
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div th:if="${notifications.isEmpty()}" class="list-group-item">
+                                <div class="text-center text-muted">No unread notifications</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

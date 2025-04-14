@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+    <head>
+        <title>Donation Centers</title>
+    </head>
+    <body>
+        <div layout:fragment="content">
+            <div class="container mt-4">
+                <div class="d-flex justify-content-between mb-4">
+                    <h1 class="h3 mb-0 text-primary"><i class="bi bi-building"></i> Donation Centers</h1>
+                    <a href="/ReStocker/centers/new" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Add Center
+                    </a>
+                </div>
+
+                <div class="card shadow">
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Address</th>
+                                    <th>Contact Email</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="center : ${centers}">
+                                    <td th:text="${center.name}"></td>
+                                    <td th:text="${center.address}"></td>
+                                    <td th:text="${center.contactEmail}"></td>
+                                    <td>
+                                        <a th:href="@{/centers/edit/{id}(id=${center.id})}" 
+                                           class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a th:href="@{/centers/delete/{id}(id=${center.id})}" 
+                                           class="btn btn-sm btn-outline-danger"
+                                           onclick="return confirm('Delete this center?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

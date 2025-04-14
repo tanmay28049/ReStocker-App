@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+    <head>
+        <title>Product List</title>
+    </head>
+    <body>
+        <div layout:fragment="content">
+            <div class="container mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0 text-primary"><i class="bi bi-box-seam"></i> Product Inventory</h1>
+                    <a href="/ReStocker/products/new" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Add Product
+                    </a>
+                </div>
+
+                <!-- Alert Section -->
+                <div th:if="${!expiringProducts.isEmpty()}" class="alert alert-warning alert-expiring mb-4">
+                    <h5 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Expiring Soon!</h5>
+                    <hr>
+                    <div class="row">
+                        <div th:each="product : ${expiringProducts}" class="col-md-4 mb-2">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 th:text="${product.name}" class="card-title"></h6>
+                                    <p class="card-text text-muted small">
+                                        Expires: <span th:text="${#temporals.format(product.expiryDate, 'MMM dd')}"></span>
+                                        <br>
+                                        <span th:if="${product.discountPercentage != null}">
+                                            Suggested Discount: 
+                                            <span class="text-danger" 
+                                                  th:text="'%' + ${product.discountPercentage}"></span>
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Section -->
+                <div class="card shadow border-0">
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Barcode</th>
+                                    <th>Expiry Date</th>
+                                    <th>Days Remaining</th>
+                                    <th>Suggested Discount</th>
+                                    <th>Suggested Centers</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${products.isEmpty()}">
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox fs-1"></i><br>
+                                        No products found. Add your first item!
+                                    </td>
+                                </tr>
+                                <tr th:each="product : ${products}" 
+                                    th:class="${T(java.time.temporal.ChronoUnit).DAYS.between(today, product.expiryDate) <= 7 ? 'table-warning' : ''}">
+                                    <td th:text="${product.name}"></td>
+                                    <td th:text="${product.barcode}"></td>
+                                    <td th:text="${#temporals.format(product.expiryDate, 'MMM dd, yyyy')}"></td>
+                                    <td>
+                                        <span th:class="${product.daysUntilExpiry <= 0} ? 'badge bg-danger' 
+                                              : (${product.daysUntilExpiry <= 7} ? 'badge bg-warning' 
+                                              : 'badge bg-success')"
+                                              th:text="${product.daysUntilExpiry <= 0} ? 'EXPIRED' 
+                                              : (${product.daysUntilExpiry} + ' days')">
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${product.discountPercentage != null}" 
+                                              class="badge bg-danger"
+                                              th:text="'%' + ${product.discountPercentage}"></span>
+                                        <span th:unless="${product.discountPercentage != null}" 
+                                              class="text-muted">N/A</span>
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" data-bs-toggle="dropdown">
+                                                Suggest Center
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li th:each="center : ${allCenters}">
+                                                    <form th:action="@{/suggestions/add}" method="post">
+                                                        <input type="hidden" name="productId" th:value="${product.id}">
+                                                        <input type="hidden" name="centerId" th:value="${center.id}">
+                                                        <button type="submit" class="dropdown-item" 
+                                                                th:text="${center.name}"></button>
+                                                    </form>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div th:if="${!product.suggestedCenters.isEmpty()}" class="mt-2">
+                                            <span th:each="center : ${product.suggestedCenters}" 
+                                                  class="badge bg-info me-1" 
+                                                  th:text="${center.name}"></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{/products/edit/{id}(id=${product.id})}" 
+                                           class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a th:href="@{/products/delete(id=${product.id})}" 
+                                           class="btn btn-sm btn-outline-danger"
+                                           onclick="return confirm('Are you sure?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

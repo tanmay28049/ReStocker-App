@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+    <div layout:fragment="content">
+        <div class="container mt-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h3 class="card-title mb-4"><i class="bi bi-upc-scan"></i> Barcode Scanner</h3>
+
+                    <div id="scanner-container" class="mb-4">
+                        <video id="scanner-video" width="100%" playsinline></video>
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        Point your camera at a barcode or QR code
+                    </div>
+
+                    <form id="barcode-form" method="post" th:action="@{/products/scan}">
+                        <input type="hidden" id="barcode-input" name="barcode">
+                    </form>
+
+                    <div th:if="${error}" class="alert alert-danger mt-3">
+                        <span th:text="${error}"></span>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="window.history.back()">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://unpkg.com/@zxing/library@0.19.1"></script>
+        <script>
+                        const codeReader = new ZXing.BrowserMultiFormatReader();
+                        let videoElement = document.getElementById('scanner-video');
+
+                        // Add loading state
+                        const loadingMessage = document.createElement('div');
+                        loadingMessage.className = 'alert alert-info';
+                        loadingMessage.textContent = 'Initializing camera...';
+                        document.querySelector('.card-body').prepend(loadingMessage);
+
+                        // Get camera access
+                        codeReader.listVideoInputDevices()
+                                .then(videoInputDevices => {
+                                    loadingMessage.remove();
+
+                                    if (videoInputDevices.length === 0) {
+                                        showError('No cameras found');
+                                        return;
+                                    }
+
+                                    codeReader.decodeFromVideoDevice(
+                                            videoInputDevices[0].deviceId,
+                                            videoElement,
+                                            (result, error) => {
+                                        if (result) {
+                                            handleScanSuccess(result.text);
+                                        }
+                                        if (error) {
+                                            handleScanError(error);
+                                        }
+                                    }
+                                    );
+                                })
+                                .catch(err => {
+                                    loadingMessage.remove();
+                                    showError(`Camera access denied: ${err.message}`);
+                                });
+
+                        function handleScanSuccess(barcode) {
+                            document.getElementById('barcode-input').value = barcode;
+                            document.getElementById('barcode-form').submit();
+                        }
+
+                        function handleScanError(error) {
+                            if (!(error instanceof ZXing.NotFoundException)) {
+                                console.error('Scan error:', error);
+                                showError(`Scanning error: ${error.message}`);
+                            }
+                        }
+
+                        function showError(message) {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'alert alert-danger mt-3';
+                            errorDiv.textContent = message;
+                            document.querySelector('.card-body').prepend(errorDiv);
+                        }
+
+                        // Cleanup when leaving page
+                        window.addEventListener('beforeunload', () => {
+                            codeReader.reset();
+                        });
+        </script>
+    </div>
