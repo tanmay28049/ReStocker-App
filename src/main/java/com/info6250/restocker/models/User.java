@@ -34,7 +34,7 @@ public class User {
     @NotBlank(message = "Password is required")
     private String password;
     
-    private String role = "USER"; // ROLES: USER, STORE_ADMIN
+    private String role = "STORE_ADMIN"; // ROLES: USER, STORE_ADMIN
     
     // Getters and setters
 

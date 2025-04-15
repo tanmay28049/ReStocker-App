@@ -42,7 +42,14 @@ public class UserService implements UserDetailsService {
     }
 
     public void registerUser(User user) {
+        if (userDao.findByEmail(user.getEmail()) != null) {
+            throw new IllegalArgumentException("Email already exists");
+        }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userDao.save(user);
+    }
+    
+    public User findByEmail(String email) {
+        return userDao.findByEmail(email);
     }
 }

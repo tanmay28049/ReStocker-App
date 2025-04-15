@@ -24,6 +24,16 @@
                                         <span th:errors="*{password}"></span>
                                     </div>
                                 </div>
+								<div class="mb-3">
+							        <label class="form-label">Role</label>
+							        <select class="form-control" th:field="*{role}">
+							            <option value="USER">User</option>
+							            <option value="STORE_ADMIN">Store Admin</option>
+							        </select>
+							        <div th:if="${#fields.hasErrors('role')}" class="alert alert-danger mt-2">
+							            <span th:errors="*{role}"></span>
+							        </div>
+							    </div>
                                 <button type="submit" class="btn btn-primary w-100">Register</button>
                             </form>
                         </div>

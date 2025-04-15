@@ -38,11 +38,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@Valid @ModelAttribute User user, 
-                              BindingResult result) {
-        if (result.hasErrors()) {
+    public String registerUser(@Valid @ModelAttribute User user, BindingResult result, Model model) {
+        // Check for an existing user with the same email:
+        if (userService.findByEmail(user.getEmail()) != null) {
+            result.rejectValue("email", "error.user", "An account already exists for this email.");
             return "auth/register";
         }
+        // Save the new user
         userService.registerUser(user);
         return "redirect:/login?registered";
     }
