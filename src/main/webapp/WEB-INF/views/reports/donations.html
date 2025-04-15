@@ -2,57 +2,60 @@
 <html xmlns:th="http://www.thymeleaf.org" 
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
-<head>
-    <title>Donation Suggestions</title>
-</head>
-<body>
-    <div layout:fragment="content">
-        <div class="container mt-4">
-            <div class="d-flex justify-content-between mb-4">
-                <h1 class="h3 mb-0 text-primary">
-                    <i class="bi bi-hand-thumbs-up"></i> Donation Recommendations
-                </h1>
-            </div>
-
-            <div class="card shadow">
-                <div class="card-body">
-                    <div th:if="${donationSuggestions.isEmpty()}" class="text-center text-muted py-4">
-                        No donation suggestions available
-                    </div>
-                    
-                    <div th:unless="${donationSuggestions.isEmpty()}" class="list-group">
-                        <div th:each="entry : ${donationSuggestions}" class="mb-4">
-                            <div class="mb-3 p-3 bg-light rounded">
-                                <h5 class="mb-1">
-                                    <i class="bi bi-building"></i> 
-                                    <span th:text="${entry.key.name}"></span>
-                                </h5>
-                                <small class="text-muted" th:text="${entry.key.address}"></small>
-                            </div>
-                            
-                            <div class="list-group">
-                                <div th:each="product : ${entry.value}" 
-                                     class="list-group-item list-group-item-action">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-0" th:text="${product.name}"></h6>
-                                            <small class="text-muted">
-                                                Expires: 
-                                                <span th:text="${#temporals.format(product.expiryDate, 'MMM dd')}"></span>
-                                            </small>
-                                        </div>
-                                        <span class="badge bg-warning text-dark">
-                                            <i class="bi bi-clock"></i> 
-                                            <span th:text="${product.daysRemaining}"></span> days
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
+	<head>
+	    <title>Donation Recommendations</title>
+	</head>
+	<body>
+	    <div layout:fragment="content">
+	        <div class="container my-4">
+	            <!-- Header with title and export button -->
+	            <div class="d-flex justify-content-between align-items-center mb-3">
+	                <h1 class="h3 text-primary">
+	                    <i class="bi bi-hand-thumbs-up"></i> Donation Recommendations
+	                </h1>
+	                <a th:href="@{/reports/donations/export}" class="btn btn-outline-primary">
+	                    <i class="bi bi-download"></i> Export CSV
+	                </a>
+	            </div>
+	            <!-- Responsive row of donation center cards -->
+	            <div class="row">
+	                <!-- Iterate over each donation center entry from the enhanced suggestions -->
+	                <div th:each="entry : ${donationSuggestions}" class="col-md-6 mb-4">
+	                    <div class="card shadow-sm">
+	                        <!-- Card header with center details -->
+	                        <div class="card-header bg-primary text-white">
+	                            <h5 class="card-title mb-0" th:text="${entry.key.name}">Center Name</h5>
+	                            <small th:text="${entry.key.address}">Address</small><br/>
+	                            <small th:text="${entry.key.contactEmail}">Contact Email</small>
+	                        </div>
+	                        <!-- Card body with table of suggested products -->
+	                        <div class="card-body">
+	                            <table class="table table-striped mb-0">
+	                                <thead>
+	                                    <tr>
+	                                        <th>Product Name</th>
+	                                        <th>Barcode</th>
+	                                        <th>Expiry Date</th>
+	                                        <th>Days Remaining</th>
+	                                    </tr>
+	                                </thead>
+	                                <tbody>
+	                                    <!-- Expect each product map to have name, barcode, expiryDate, and daysRemaining -->
+	                                    <tr th:each="prod : ${entry.value}">
+	                                        <td th:text="${prod.name}">Product Name</td>
+	                                        <td th:text="${prod.barcode}">Barcode</td>
+	                                        <td th:text="${#temporals.format(prod.expiryDate, 'MMM dd, yyyy')}">Expiry Date</td>
+	                                        <td th:text="${prod.daysRemaining}">Days</td>
+	                                    </tr>
+	                                </tbody>
+	                            </table>
+	                        </div>
+	                    </div>
+	                </div>
+	                <!-- End card column -->
+	            </div>
+	            <!-- End row -->
+	        </div>
+	    </div>
+	</body>
 </html>

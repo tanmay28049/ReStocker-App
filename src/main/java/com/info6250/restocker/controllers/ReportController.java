@@ -99,6 +99,7 @@ public class ReportController {
                     .map(product -> {
                         Map<String, Object> productInfo = new HashMap<>();
                         productInfo.put("name", product.getName());
+                        productInfo.put("barcode", product.getBarcode());
                         productInfo.put("expiryDate", product.getExpiryDate());
                         productInfo.put("daysRemaining", ChronoUnit.DAYS.between(today, product.getExpiryDate()));
                         return productInfo;
@@ -109,6 +110,49 @@ public class ReportController {
 
         model.addAttribute("donationSuggestions", enhancedSuggestions);
         return "reports/donations";
+    }
+    
+    @GetMapping("/donations/export")
+    public void exportDonationsReport(HttpServletResponse response) throws Exception {
+        // Set content type and header so the browser downloads a CSV file.
+        response.setContentType("text/csv");
+        String headerValue = "attachment; filename=donations_report.csv";
+        response.setHeader("Content-Disposition", headerValue);
+
+        // Retrieve donation suggestions from your service.
+        Map<DonationCenter, List<Product>> suggestions = productService.getDonationSuggestions();
+        LocalDate today = LocalDate.now();
+        // Date formatter for the expiry date field.
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+
+        try (PrintWriter writer = response.getWriter()) {
+            // Write CSV header row.
+            writer.println("\"Donation Center\",\"Address\",\"Contact Email\",\"Product Name\",\"Barcode\",\"Expiry Date\",\"Days Remaining\"");
+            
+            // Iterate over each donation center and its suggested products.
+            for (Map.Entry<DonationCenter, List<Product>> entry : suggestions.entrySet()) {
+                DonationCenter center = entry.getKey();
+                String centerName = center.getName();
+                String centerAddress = center.getAddress();
+                String contactEmail = center.getContactEmail() != null ? center.getContactEmail() : "";
+
+                // For each product associated with this donation center.
+                for (Product product : entry.getValue()) {
+                    String productName = product.getName();
+                    String barcode = product.getBarcode();
+                    String expiryDateStr = product.getExpiryDate() != null ? product.getExpiryDate().format(dateFormatter) : "";
+                    String daysRemaining = "";
+                    if (product.getExpiryDate() != null) {
+                        daysRemaining = Long.toString(ChronoUnit.DAYS.between(today, product.getExpiryDate()));
+                    }
+                    // Build a CSV row with each value in double quotes.
+                    String csvRow = String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"",
+                        centerName, centerAddress, contactEmail,
+                        productName, barcode, expiryDateStr, daysRemaining);
+                    writer.println(csvRow);
+                }
+            }
+        }
     }
 
     @GetMapping("/waste")
