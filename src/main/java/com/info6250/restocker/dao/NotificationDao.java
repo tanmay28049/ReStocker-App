@@ -15,4 +15,5 @@ public interface NotificationDao {
     void create(Notification notification);
     List<Notification> getUnacknowledged();
     void acknowledge(Long id);
+    Notification findUnacknowledgedByProductId(Long productId);
 }

@@ -92,17 +92,17 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public void addDonationSuggestion(Long productId, Long centerId) {
         Session session = sessionFactory.getCurrentSession();
-        
 
         Product product = session.get(Product.class, productId);
         DonationCenter center = session.get(DonationCenter.class, centerId);
 
         if (product != null && center != null) {
-            product.getSuggestedCenters().add(center);
-            session.merge(product);
+            // Check for duplicate
+            if (!product.getSuggestedCenters().contains(center)) {
+                product.getSuggestedCenters().add(center);
+                session.merge(product);
+            }
         }
-
-        
     }
 
     @Override

@@ -56,4 +56,13 @@ public class NotificationDaoImpl implements NotificationDao {
         }
         
     }
+    
+    @Override
+    public Notification findUnacknowledgedByProductId(Long productId) {
+        Session session = sessionFactory.getCurrentSession();
+        return session.createQuery(
+                "FROM Notification n WHERE n.product.id = :pid AND n.acknowledged = false", Notification.class)
+                .setParameter("pid", productId)
+                .uniqueResult();
+    }
 }

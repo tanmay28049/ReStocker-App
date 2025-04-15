@@ -89,10 +89,9 @@ public class ReportController {
     @GetMapping("/donations")
     public String donationReport(Model model) {
         Map<DonationCenter, List<Product>> suggestions = productService.getDonationSuggestions();
-
-        // Calculate days remaining for each product
-        Map<DonationCenter, List<Map<String, Object>>> enhancedSuggestions = new LinkedHashMap<>();
         LocalDate today = LocalDate.now();
+
+        Map<DonationCenter, List<Map<String, Object>>> enhancedSuggestions = new LinkedHashMap<>();
 
         suggestions.forEach((center, products) -> {
             List<Map<String, Object>> enhancedProducts = products.stream()
@@ -101,7 +100,10 @@ public class ReportController {
                         productInfo.put("name", product.getName());
                         productInfo.put("barcode", product.getBarcode());
                         productInfo.put("expiryDate", product.getExpiryDate());
-                        productInfo.put("daysRemaining", ChronoUnit.DAYS.between(today, product.getExpiryDate()));
+                        // Check expiry date for null
+                        long daysRemaining = product.getExpiryDate() != null ?
+                            ChronoUnit.DAYS.between(today, product.getExpiryDate()) : 0;
+                        productInfo.put("daysRemaining", daysRemaining);
                         return productInfo;
                     })
                     .collect(Collectors.toList());

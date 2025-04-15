@@ -44,11 +44,15 @@ public class NotificationService {
     public void generateExpiryNotifications() {
         LocalDate threshold = LocalDate.now().plusDays(7);
         productService.getExpiringProducts(threshold).forEach(product -> {
-            Notification notification = new Notification();
-            notification.setMessage("Product '" + product.getName() + "' expires on " 
-                + product.getExpiryDate());
-            notification.setProduct(product);
-            notificationDao.create(notification);
+            // Check if there's already an unacknowledged notification for this product.
+            Notification existing = notificationDao.findUnacknowledgedByProductId(product.getId());
+            if (existing == null) {
+                Notification notification = new Notification();
+                notification.setMessage("Product '" + product.getName() + "' expires on " 
+                    + product.getExpiryDate());
+                notification.setProduct(product);
+                notificationDao.create(notification);
+            }
         });
     }
 }
