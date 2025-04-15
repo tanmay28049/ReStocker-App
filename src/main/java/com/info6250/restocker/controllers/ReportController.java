@@ -157,31 +157,123 @@ public class ReportController {
 
     @GetMapping("/waste")
     public String wasteReport(Model model) {
+        // Define reporting period: from one month ago (excluding today) until yesterday.
         LocalDate endDate = LocalDate.now().minusDays(1);
         LocalDate startDate = endDate.minusMonths(1);
-
+        
+        // Retrieve waste trends map: key = date, value = list of expired products on that day.
         Map<LocalDate, List<Product>> trends = productService.getWasteTrends();
-        System.out.println("Waste trends data: " + trends); // Debug logging
+        
+        // Sort dates and build chart data.
+        List<LocalDate> sortedDates = trends.keySet().stream().sorted().collect(Collectors.toList());
+        List<String> labels = sortedDates.stream()
+                .map(date -> date.format(DateTimeFormatter.ofPattern("MMM dd")))
+                .collect(Collectors.toList());
+        List<Integer> counts = sortedDates.stream()
+                .map(date -> trends.get(date).size())
+                .collect(Collectors.toList());
 
-        List<String> formattedDates = Collections.emptyList();
-        List<Integer> counts = Collections.emptyList();
+        // Compute summary KPIs.
+        int totalWaste = counts.stream().mapToInt(Integer::intValue).sum();
+        double averageWaste = counts.isEmpty() ? 0 : (double) totalWaste / counts.size();
+        int maxWasteCount = counts.isEmpty() ? 0 : counts.stream().mapToInt(Integer::intValue).max().getAsInt();
+        LocalDate maxWasteDate = sortedDates.stream()
+                .filter(date -> trends.get(date).size() == maxWasteCount)
+                .findFirst().orElse(null);
 
-        if (trends != null && !trends.isEmpty()) {
-            formattedDates = trends.keySet().stream()
-                    .sorted()
-                    .map(date -> date.format(DateTimeFormatter.ofPattern("MMM dd")))
-                    .collect(Collectors.toList());
+        // Prepare detailed daily waste records.
+        List<Map<String, Object>> dailyWasteDetails = sortedDates.stream().map(date -> {
+            Map<String, Object> record = new HashMap<>();
+            record.put("date", date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
+            record.put("count", trends.get(date).size());
+            String productNames = trends.get(date).stream()
+                    .map(Product::getName)
+                    .collect(Collectors.joining(", "));
+            record.put("products", productNames);
+            return record;
+        }).collect(Collectors.toList());
 
-            counts = trends.values().stream()
-                    .map(List::size)
-                    .collect(Collectors.toList());
-        }
-
-        System.out.println("Formatted dates: " + formattedDates); // Debug
-        System.out.println("Counts: " + counts); // Debug
-
-        model.addAttribute("labels", formattedDates);
+        // Add values to model.
+        model.addAttribute("labels", labels);
         model.addAttribute("data", counts);
+        model.addAttribute("totalWaste", totalWaste);
+        model.addAttribute("averageWaste", String.format("%.2f", averageWaste));
+        model.addAttribute("maxWasteCount", maxWasteCount);
+        model.addAttribute("maxWasteDate", maxWasteDate != null ?
+                maxWasteDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "N/A");
+        model.addAttribute("dailyWasteDetails", dailyWasteDetails);
+        
         return "reports/waste";
+    }
+
+    @GetMapping("/waste/export")
+    public void exportWasteReport(HttpServletResponse response) throws Exception {
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=waste_report.csv");
+        
+        // Define the reporting period: from one month ago (excluding today) until yesterday.
+        LocalDate endDate = LocalDate.now().minusDays(1);
+        LocalDate startDate = endDate.minusMonths(1);
+        
+        // Retrieve daily waste trends.
+        Map<LocalDate, List<Product>> trends = productService.getWasteTrends();
+        List<LocalDate> sortedDates = trends.keySet().stream().sorted().collect(Collectors.toList());
+        
+        // Compute summary KPIs.
+        List<Integer> counts = sortedDates.stream()
+                .map(date -> trends.get(date).size())
+                .collect(Collectors.toList());
+        int totalWaste = counts.stream().mapToInt(Integer::intValue).sum();
+        double averageWaste = counts.isEmpty() ? 0 : (double) totalWaste / counts.size();
+        int maxWasteCount = counts.isEmpty() ? 0 : counts.stream().mapToInt(Integer::intValue).max().getAsInt();
+        LocalDate maxWasteDate = sortedDates.stream()
+                .filter(date -> trends.get(date).size() == maxWasteCount)
+                .findFirst().orElse(null);
+        
+        DateTimeFormatter dateFormatterFull = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        
+        try (PrintWriter writer = response.getWriter()) {
+            // SECTION 1: Report Metadata Header
+            writer.println("Waste Report");
+            writer.println("Report Generated:," + escapeCsv(LocalDate.now().toString()));
+            writer.println("Reporting Period:," 
+                    + escapeCsv(startDate.format(dateFormatterFull) + " to " + endDate.format(dateFormatterFull)));
+            writer.println(); // blank line
+            
+            // SECTION 2: Summary Metrics
+            writer.println("Metric,Value");
+            writer.println("Total Waste:," + totalWaste);
+            writer.println("Average Daily Waste:," + String.format("%.2f", averageWaste));
+            writer.println("Max Waste Day:," + (maxWasteDate != null ? escapeCsv(maxWasteDate.format(dateFormatterFull)) : escapeCsv("N/A")));
+            writer.println("Max Waste Count:," + maxWasteCount);
+            writer.println(); // blank line
+            
+            // SECTION 3: Detailed Daily Data
+            writer.println("Date,Waste Count,Product Names");
+            for (LocalDate date : sortedDates) {
+                String dateStr = date.format(dateFormatterFull);
+                int count = trends.get(date).size();
+                // Use a semicolon separator for product names.
+                String productNames = trends.get(date).stream()
+                        .map(Product::getName)
+                        .collect(Collectors.joining("; "));
+                String csvRow = String.format("%s,%d,%s",
+                        escapeCsv(dateStr), count, escapeCsv(productNames));
+                writer.println(csvRow);
+            }
+        }
+    }
+
+    /**
+     * Helper method that always returns a CSV-escaped field.
+     * This method wraps the field in double quotes and escapes any existing double quotes.
+     */
+    private String escapeCsv(String field) {
+        if (field == null) {
+            return "\"\"";
+        }
+        // Replace any " with double "".
+        String escaped = field.replace("\"", "\"\"");
+        return "\"" + escaped + "\"";
     }
 }
