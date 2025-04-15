@@ -82,4 +82,17 @@ public class ProductService {
 
         return products;
     }
+
+    public List<Product> getEnhancedExpiringProducts(LocalDate start, LocalDate end) {
+        List<Product> products = productDao.findExpiringProductsBetweenDates(start, end);
+        LocalDate today = LocalDate.now();
+        products.forEach(product -> {
+            if(product.getExpiryDate() != null) {
+                long days = ChronoUnit.DAYS.between(today, product.getExpiryDate());
+                product.setDaysUntilExpiry(days);
+                calculateDiscount(product, today);  // This method sets discountPercentage based on the expiry date.
+            }
+        });
+        return products;
+    }
 }

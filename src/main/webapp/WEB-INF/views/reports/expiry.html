@@ -2,41 +2,46 @@
 <html xmlns:th="http://www.thymeleaf.org" 
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
-    <head>
-        <title>Expiry Report</title>
-    </head>
-    <body>
-        <div layout:fragment="content">
-            <div class="container mt-4">
-                <div class="d-flex justify-content-between mb-4">
-                    <h1 class="h3 mb-0 text-primary">
-                        <i class="bi bi-calendar-x"></i> Expiry Forecast Report
-                    </h1>
-                </div>
-
-                <div class="card shadow">
-                    <div class="card-body">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Barcode</th>
-                                    <th>Expiry Date</th>
-                                    <th>Days Remaining</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="product : ${expiryData}">
-                                    <td th:text="${product.name}"></td>
-                                    <td th:text="${product.barcode}"></td>
-                                    <td th:text="${#temporals.format(product.expiryDate, 'MMM dd, yyyy')}"></td>
-                                    <td th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(today, product.expiryDate)}"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </body>
+	<head>
+	    <title>Expiry Report</title>
+	</head>
+	<body>
+	    <div layout:fragment="content">
+	        <div class="container mt-4">
+	            <div class="d-flex justify-content-between mb-4">
+	                <h1 class="h3 mb-0 text-primary">
+	                    <i class="bi bi-calendar-x"></i> Expiry Forecast Report
+	                </h1>
+	                <!-- Export button added -->
+	                <a th:href="@{/reports/expiry/export}" class="btn btn-outline-primary">
+	                    <i class="bi bi-download"></i> Export CSV
+	                </a>
+	            </div>
+	            <div class="card shadow">
+	                <div class="card-body">
+	                    <table class="table">
+	                        <thead>
+	                            <tr>
+	                                <th>Product</th>
+	                                <th>Barcode</th>
+	                                <th>Expiry Date</th>
+	                                <th>Days Remaining</th>
+	                                <th>Discount Percentage</th>
+	                            </tr>
+	                        </thead>
+	                        <tbody>
+	                            <tr th:each="product : ${expiryData}">
+	                                <td th:text="${product.name}"></td>
+	                                <td th:text="${product.barcode}"></td>
+	                                <td th:text="${#temporals.format(product.expiryDate, 'MMM dd, yyyy')}"></td>
+	                                <td th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(today, product.expiryDate)}"></td>
+	                                <td th:text="${product.discountPercentage != null ? ('%' + product.discountPercentage) : 'N/A'}"></td>
+	                            </tr>
+	                        </tbody>
+	                    </table>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	</body>
 </html>
